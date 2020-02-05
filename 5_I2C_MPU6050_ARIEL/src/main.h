@@ -5,7 +5,8 @@
 #include "tm_stm32_usart.h"
 #include "tm_stm32_adc.h"
 #include "stm32f4xx_hal.h"
-#include "ariel_stm32_hmc5883l.h"
+#include "mpu6050.h"
+
 
 
 #include "printf.h"

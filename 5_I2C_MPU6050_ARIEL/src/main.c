@@ -1,13 +1,12 @@
 
 #include "main.h"
 
-HMC5883L_t HMC5883L;
+uint8_t MPU6050 = MPU6050_I2C_ADDR;
 
 void LED_Init(int pin);
 
 int main(void)
 {
-  uint16_t result;
 
   HAL_Init();
 
@@ -18,30 +17,28 @@ int main(void)
 
   TM_USART_Init(USART3, TM_USART_PinsPack_1, 9600);
 
-  TM_USART_Puts(USART3, "Hello world\n\r");
+
 
   TM_ADC_Init(ADC1, TM_ADC_Channel_11);
 
-  int target = HMC5883L_Init(&HMC5883L, HMC5883L_Device_0);
-  if (target == HMC5883L_Result_Ok)
-  {
-
-  char buff[20];
-    TM_USART_Puts(USART3, "HMC5883L Detected\n");
-     sprintf(buff, "%d\n\r", target);
-      TM_USART_Puts(USART3, buff);
-  }
+  if (I2C_Device_Init(MPU6050, 0x68) != 0)
+    TM_USART_Puts(USART3, "Error I2C\n\r");
   else
-  {
+    TM_USART_Puts(USART3, "Device I2C Conected\n\r");
 
-      char buff[20];
-      sprintf(buff, "%d\n\r", target);
-      TM_USART_Puts(USART3, buff);
-    
-  }
+
+  if (  MPU_Config(MPU6050) != 0)
+    TM_USART_Puts(USART3, "Error Configuring I2C\n\r");
+  else
+    TM_USART_Puts(USART3, "Device I2C Configured\n\r");
+
+
+
 
   while (1)
   {
+    float temperature;
+    int16_t adc;
     char buff[20];
 
     HAL_GPIO_TogglePin(LED_GPIO_PORT, LED_PIN_1);
@@ -53,14 +50,16 @@ int main(void)
     HAL_GPIO_TogglePin(LED_GPIO_PORT, LED_PIN_4);
     HAL_Delay(50);
 
-    HMC5883L_ReadAll(&HMC5883L);
+    //HMC5883L_ReadAll(&HMC5883L);
 
-    result = TM_ADC_Read(ADC1, TM_ADC_Channel_11);
+    adc = TM_ADC_Read(ADC1, TM_ADC_Channel_11);
 
+   temperature =(float)((int16_t)I2C_Device_ReadValue(MPU6050,MPU6050_TEMP_OUT_H) / (float)340.0 + (float)36.53);
+  
     /* Raw data are available for use as needed */
 
-    sprintf(buff, "%f\n\r", HMC5883L.Compass_X);
-    //sprintf(buff, "%f\n\r", 123.544);
+    //sprintf(buff, "%f\n\r", HMC5883L.Compass_X);
+    sprintf(buff, "%f\n\r", temperature);
     TM_USART_Puts(USART3, buff);
   }
 }
